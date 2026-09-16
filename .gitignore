@@ -1,0 +1,8 @@
+.venv/
+.env
+service-account.json
+*.docx.tmp
+.DS_Store
+vault/applications/*.md
+templates/cv_master.docx
+output/*.docx
