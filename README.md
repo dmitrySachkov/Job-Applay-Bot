@@ -21,7 +21,8 @@ no web UI.
    (uniform bullet rhythm, suspiciously round numbers, corporate filler
    phrases, absence of natural imperfection) and rewrites it so it reads like
    a person wrote it.
-5. The final adapted CV is saved to `output/`, linked from the vault note.
+5. The final adapted CV, cover letter and form answers are saved to a
+   per-vacancy folder `output/{Company}_{Role}/`, linked from the vault note.
 6. **`status-sync`** keeps the Obsidian note and a Google Sheet row in sync
    whenever you update an application's status (applied, screening,
    interview, offer, rejected).
@@ -96,7 +97,7 @@ job-apply-bot/
     status-sync/SKILL.md
   vault/applications/*.md       # one Obsidian note per application
   templates/cv_master.docx      # your master resume — never overwritten
-  output/CV_*.docx              # tailored CVs, one per application
+  output/{Company}_{Role}/      # one folder per application: CV, cover letter, form answers
   scripts/
     setup.sh                    # interactive first-time setup
     sheets_sync.py               # Google Sheet sync
@@ -107,7 +108,8 @@ job-apply-bot/
 ## Notes on the design
 
 - **`templates/cv_master.docx` is read-only by convention.** Every tailored
-  version is a new file in `output/`, named after the company and role.
+  version is a new file in that application's folder `output/{Company}_{Role}/`,
+  named after the company and role.
 - **The vault note and the Sheet row are always updated together**, via
   `status-sync`, so they never drift out of sync.
 - **`humanize` is mandatory** before anything gets saved to `output/`. AI
@@ -123,7 +125,7 @@ job-apply-bot/
 ## Privacy
 
 `.gitignore` excludes `.env`, `service-account.json`, your resume
-(`templates/cv_master.docx`), adapted CVs (`output/*.docx`), and your actual
+(`templates/cv_master.docx`), everything in `output/`, and your actual
 application notes (`vault/applications/*.md`) — so cloning or forking this
 repo gives you the tooling, not anyone's personal job-search data.
 

@@ -5,4 +5,4 @@ service-account.json
 .DS_Store
 vault/applications/*.md
 templates/cv_master.docx
-output/*.docx
+output/

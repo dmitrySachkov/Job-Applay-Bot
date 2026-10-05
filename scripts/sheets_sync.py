@@ -6,10 +6,16 @@
     python sheets_sync.py --company "Photoroom" --role "Senior iOS Engineer" \
         --status applied --date-applied 2026-09-16 --source "LinkedIn" \
         --recruiter "" --location "Paris (in-office 3d/week)" \
-        --salary "90-110k EUR + BSPCE" --cv-file "output/CV_Photoroom_Senior_iOS.docx"
+        --salary "90-110k EUR + BSPCE" --cv-file "output/Photoroom_Senior_iOS/CV_Photoroom_Senior_iOS.docx"
 
-Если строка с таким company уже есть в таблице — обновляет её.
-Если нет — добавляет новую строку в конец.
+Поиск существующей строки (по порядку, первое однозначное совпадение):
+    1. Company + Role
+    2. CV File (если совпадений несколько — сужается по Role)
+    3. Только Company — если такая строка в таблице одна
+Если строка найдена — обновляет её, если нет — добавляет новую в конец.
+Если совпадений несколько и выбрать нельзя — ничего не пишет и завершается с ошибкой.
+При обновлении Company в таблице не меняется, а пустой --notes не затирает Notes.
+--dry-run показывает, что было бы сделано, без записи в таблицу.
 
 Настройка (один раз):
     1. Google Cloud Console -> создать проект -> включить Google Sheets API и Google Drive API
@@ -98,32 +104,85 @@ def get_worksheet():
     return worksheet
 
 
-def find_row_by_company(worksheet, company: str):
-    values = worksheet.get_all_values()
+class AmbiguousMatch(Exception):
+    pass
+
+
+def _norm(value: str) -> str:
+    return value.strip().lower()
+
+
+def find_row(values, data: dict):
+    """Возвращает (номер строки в таблице, сама строка) или (None, None)."""
     if not values:
-        return None
+        return None, None
     header = values[0]
-    try:
-        company_col = header.index("Company")
-    except ValueError:
+    rows = [(idx, row) for idx, row in enumerate(values[1:], start=2)]  # +1 за 1-based, +1 за header
+
+    def cell(row, col):
+        i = header.index(col) if col in header else -1
+        return _norm(row[i]) if 0 <= i < len(row) else ""
+
+    company, role, cv_file = (_norm(data.get(k, "")) for k in ("Company", "Role", "CV File"))
+
+    def pick(matches, rule):
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            found = ", ".join(str(idx) for idx, _ in matches)
+            raise AmbiguousMatch(f"{rule}: подходят строки {found}")
         return None
-    for idx, row in enumerate(values[1:], start=2):  # строки начинаются с 1, +header
-        if len(row) > company_col and row[company_col].strip().lower() == company.strip().lower():
-            return idx
-    return None
+
+    # 1. Company + Role
+    if company and role:
+        hit = pick([r for r in rows if cell(r[1], "Company") == company and cell(r[1], "Role") == role],
+                   "Company + Role")
+        if hit:
+            return hit
+
+    # 2. CV File, при неоднозначности — сужаем по Role
+    if cv_file:
+        same_cv = [r for r in rows if cell(r[1], "CV File") == cv_file]
+        if len(same_cv) > 1 and role:
+            same_cv = [r for r in same_cv if cell(r[1], "Role") == role] or same_cv
+        hit = pick(same_cv, "CV File")
+        if hit:
+            return hit
+
+    # 3. Только Company — если строка единственная
+    if company:
+        hit = pick([r for r in rows if cell(r[1], "Company") == company], "Company")
+        if hit:
+            return hit
+
+    return None, None
 
 
-def upsert_row(worksheet, data: dict):
-    row_values = [data.get(col, "") for col in COLUMNS]
-    existing_row = find_row_by_company(worksheet, data.get("Company", ""))
+def upsert_row(worksheet, data: dict, dry_run: bool = False):
+    values = worksheet.get_all_values()
+    existing_row, existing = find_row(values, data)
 
     if existing_row:
-        cell_range = f"A{existing_row}:{chr(ord('A') + len(COLUMNS) - 1)}{existing_row}"
-        worksheet.update(cell_range, [row_values])
-        print(f"Обновлена строка {existing_row} для '{data.get('Company')}'")
+        # Название компании в таблице может быть уточнено вручную ("Xebia (Automotive)") — не затираем.
+        # Пустой --notes тоже не затирает уже заполненные Notes.
+        keep = ["Company"] + ([] if data.get("Notes") else ["Notes"])
+        for col in keep:
+            if col in values[0] and values[0].index(col) < len(existing):
+                data = {**data, col: existing[values[0].index(col)]}
+
+    row_values = [data.get(col, "") for col in COLUMNS]
+    prefix = "[dry-run] " if dry_run else ""
+
+    if existing_row:
+        if not dry_run:
+            cell_range = f"A{existing_row}:{chr(ord('A') + len(COLUMNS) - 1)}{existing_row}"
+            worksheet.update(cell_range, [row_values])
+        print(f"{prefix}Обновлена строка {existing_row} для '{data.get('Company')}' "
+              f"(в таблице: '{existing[0]}')")
     else:
-        worksheet.append_row(row_values)
-        print(f"Добавлена новая строка для '{data.get('Company')}'")
+        if not dry_run:
+            worksheet.append_row(row_values)
+        print(f"{prefix}Добавлена новая строка для '{data.get('Company')}'")
 
 
 def main():
@@ -138,6 +197,8 @@ def main():
     parser.add_argument("--salary", default="")
     parser.add_argument("--cv-file", default="")
     parser.add_argument("--notes", default="")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="показать, какая строка будет обновлена/добавлена, без записи")
     args = parser.parse_args()
 
     data = {
@@ -154,7 +215,11 @@ def main():
     }
 
     worksheet = get_worksheet()
-    upsert_row(worksheet, data)
+    try:
+        upsert_row(worksheet, data, dry_run=args.dry_run)
+    except AmbiguousMatch as e:
+        print(f"Не удалось однозначно найти строку ({e}). Ничего не записано.", file=sys.stderr)
+        sys.exit(2)
 
 
 if __name__ == "__main__":

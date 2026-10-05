@@ -49,5 +49,10 @@ description: Используй после vacancy-intake, когда нужно
 6. ПЕРЕДАЙ черновик(и) на обработку skill'у `humanize` ПЕРЕД тем, как сохранять
    финальный .docx в `output/`. Не создавай финальный файл в обход humanize.
 
-7. После humanize — собери финальный `output/CV_{Company}_{Role}.docx` (через docx skill),
-   впиши путь к нему в поле `cv_file` во frontmatter заметки.
+7. После humanize — создай папку вакансии `output/{Company}_{Role}/` и собери в неё (через docx skill):
+   - `CV_{Company}_{Role}.docx`
+   - `CoverLetter_{Company}_{Role}.docx` — если готовился cover letter
+   - `FormAnswers_{Company}_{Role}.md` — если готовились ответы на форму
+
+   Впиши путь к CV (`output/{Company}_{Role}/CV_{Company}_{Role}.docx`) в поле `cv_file`
+   во frontmatter заметки. Файлы одной вакансии не кладутся в корень `output/`.
