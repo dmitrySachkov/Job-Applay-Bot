@@ -149,9 +149,11 @@ def find_row(values, data: dict):
         if hit:
             return hit
 
-    # 3. Только Company — если строка единственная
+    # 3. Только Company — если строка единственная. Строки с другой непустой Role — это
+    #    отдельные отклики в ту же компанию, их не трогаем.
     if company:
-        hit = pick([r for r in rows if cell(r[1], "Company") == company], "Company")
+        hit = pick([r for r in rows if cell(r[1], "Company") == company
+                    and (not role or cell(r[1], "Role") in ("", role))], "Company")
         if hit:
             return hit
 
