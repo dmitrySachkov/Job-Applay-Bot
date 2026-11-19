@@ -27,6 +27,24 @@ no web UI.
    whenever you update an application's status (applied, screening,
    interview, offer, rejected).
 
+## Two scenarios
+
+The project runs in one of two modes. Claude asks which one at the start of every session.
+
+| | Vacancies | Founders |
+|---|---|---|
+| Input | a job posting | a founder's post or profile |
+| Skills | `vacancy-intake`, `cv-adapt`, `humanize`, `status-sync`, `daily-run` | `lead-intake`, `fit-pitch`, `outreach-humanize`, `reply-assist`, `lead-sync`, `founders-daily-run` |
+| Checker agent | `checker` | `outreach-checker` |
+| Notes | `vault/applications/` | `vault/leads/` |
+| Output | `output/{Company}_{Role}/` | `output/founders/{Company}_{Founder}/` |
+| Sheet | `scripts/sheets_sync.py` | `scripts/leads_sync.py` (tab `Founders`) |
+| Daily run | `scripts/daily_run.sh` (applies automatically) | `scripts/daily_run.sh founders` (drafts only, never sends) |
+
+Founders setup: fill in `config/offer.md`, keep `config/confirmed_facts.md` current, and create a
+saved Chrome tab group "Founder Search" (see `config/sources.md`). The founders launchd job
+(`scripts/com.jobapplybot.founders.plist`, 15:00) is not installed by default.
+
 ## Requirements
 
 - [Claude Code](https://claude.com/claude-code)

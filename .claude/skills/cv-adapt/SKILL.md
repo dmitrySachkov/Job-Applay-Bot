@@ -1,6 +1,6 @@
 ---
 name: cv-adapt
-description: Используй после vacancy-intake, когда нужно сравнить требования вакансии с эталонным резюме (templates/cv_master.docx) и подготовить адаптированную версию CV/cover letter под конкретную вакансию.
+description: Сценарий «вакансии». Используй после vacancy-intake, когда нужно сравнить требования вакансии с эталонным резюме (templates/cv_master.docx) и подготовить адаптированную версию CV/cover letter под конкретную вакансию.
 ---
 
 # CV Adapt

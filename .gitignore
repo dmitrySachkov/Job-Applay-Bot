@@ -5,4 +5,19 @@ service-account.json
 .DS_Store
 vault/applications/*.md
 templates/cv_master.docx
+output/logs/
+config/applicant_profile.md
+vault/daily/*.md
+
+# founders scenario
+vault/leads/*.md
+vault/daily-founders/*.md
+config/offer.md
+config/confirmed_facts.md
+.merge-backup-*/
+__pycache__/
+
+# локальные данные: логи, готовые отклики, шаблоны резюме
+logs/
 output/
+templates/
