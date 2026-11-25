@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh '/Users/dmitrysachkov/Projects/Job-Apply-Bot/.codex/hooks/scenario_gate.sh'"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh '/Users/dmitrysachkov/Projects/Job-Apply-Bot/.codex/hooks/scenario_gate.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}
